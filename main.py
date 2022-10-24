@@ -16,6 +16,7 @@ cmd = 'iwconfig wlxaa0510003923 | grep -i quality > RSSI.csv'
 os.system(cmd)
 latitude = "N/a"
 longitude = "N/a"
+altitude = "N/a"
 
 UDP_IP = "192.168.43.139"
 UDP_PORT = 8000
@@ -33,12 +34,13 @@ async def Read_UDP():
     while True:
         await asyncio.sleep(0)
         data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-      #  print("received message: %s" % data)
+        # print("received message: %s" % data)
         lat_UDP = data[18:26].decode()
         long_UDP = data[30:38].decode()
-        GPS_UDP = [lat_UDP, long_UDP]
+        altitude_UDP = data[42:46].decode()
+        GPS_UDP = [lat_UDP, long_UDP, altitude_UDP]
         # print(GPS_UDP)
-    
+       
 async def Write_CSV():
     while True:
         await asyncio.sleep(0)
@@ -49,6 +51,7 @@ async def Write_CSV():
 async def Read_CSV():
     global lat_csv
     global long_csv
+    global altitude_csv
     while True:
         await asyncio.sleep(0)
         with open('GPS.csv', 'r') as file:
@@ -57,21 +60,26 @@ async def Read_CSV():
                 if each_row:
                     lat_csv = each_row[0]
                     long_csv = each_row[1]
-#                   print(long_csv)
-#                    print("=======================================")
-#                    print(lat_csv)
+                    altitude_csv = each_row[2]
+                    # print(long_csv)
+                    # print(lat_csv)
+                    # print(altitude_csv)
+ 
                     
 async def Get_GPS():
     global latitude
-    global longitude 
+    global longitude
+    global altitude 
     while True:
         await asyncio.sleep(0)
        # print(lat_csv[1:10])
         if lat_csv[0:1] == "2" and long_csv[0:1] == "3":
             latitude =  lat_csv
             longitude = long_csv
+            altitude = altitude_csv
             # print("Latitude: ","", latitude)
             # print("Longitude: ", longitude)
+            # print("Altitude: ","", altitude)
 
 
 async def RSSI_Read():
@@ -94,14 +102,19 @@ async def monitor():
         print("="*26)
         print("| Latitude:  ", latitude,"  |")
         print("| Longitude: ", longitude,"  |")
+        print("| Altitude:  ", altitude,"      |")
         print("| RSSI:      ", RSSI, "       |")
         print("="*26)
 
 async def Serial_UNO():
+     latitude = 21.756545
+     longitude = 39.234567
+     altitude = 60.9
      while True:
          await asyncio.sleep(0)
 
-         angle_value_list = [str(RSSI),str(","),str(latitude),str(","),str(longitude),str("    ")]    
+         angle_value_list = [str(RSSI),str(","),str(latitude),str(","),str(longitude)
+         ,str(altitude), str("  ")]    
          send_string = ','.join(angle_value_list)
          send_string += "\n"
 
@@ -116,10 +129,10 @@ async def Serial_UNO():
 
 loop = asyncio.get_event_loop()
 try:
-    asyncio.ensure_future(Read_UDP())
-    asyncio.ensure_future(Write_CSV())
-    asyncio.ensure_future(Read_CSV())
-    asyncio.ensure_future(Get_GPS())
+    # asyncio.ensure_future(Read_UDP())
+    # asyncio.ensure_future(Write_CSV())
+    # asyncio.ensure_future(Read_CSV())
+    # asyncio.ensure_future(Get_GPS())
     asyncio.ensure_future(RSSI_Read())
     # asyncio.ensure_future(monitor())
     asyncio.ensure_future(Serial_UNO())
