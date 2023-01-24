@@ -27,11 +27,11 @@ url = "http://192.168.4.1"
 latitude = " "  # Latitude in degrees
 longitude = " "  # Longitude in degrees
 altitude = ""  # Altitude in meters
-
+# 21.496306448242912, 39.2458077426255
 # Initialize the GPS coordinates for the ground control station (GCS)
-GCS_LATITUDE = 21.49632  # Latitude in degrees of the GCS location
-GCS_LONGITUDE = 39.24585  # Longitude in degrees of the GCS location
-GCS_ALTITUDE = 63.3     # Altitude in meters of the GCS location
+GCS_LATITUDE = 21.4964005  # Latitude in degrees of the GCS location
+GCS_LONGITUDE = 39.2457465  # Longitude in degrees of the GCS location
+GCS_ALTITUDE = 32.06     # Altitude in meters of the GCS location
 
 # Initialize variables for the angles and steps of the antenna
 OangleH = 0  # Horizontal angle in degrees
@@ -78,7 +78,7 @@ async def mobile_udp():
     # Run this loop indefinitely
     while True:
         # Sleep for a small amount of time to avoid using too many resources
-        await asyncio.sleep(0.0005)
+        await asyncio.sleep(1)
 
         # Send the string "ping" to the specified address and port
         # sock_mobile.sendto(b'ping', ('192.168.100.3', 8008))
@@ -89,6 +89,7 @@ async def mobile_udp():
         try:
             # Receive data from the client, with a buffer size of 1024 bytes
             data, client_address = sock_mobile.recvfrom(1024)
+            # print(data)
 
         except socket.timeout:
             # If no data is received within the timeout period, print a message and set the recapture flag
@@ -107,33 +108,33 @@ async def mobile_udp():
             udp_string = data.decode('utf8')
 
             # Split the string on the comma character and retrieve the second element (the checksum)
-            checksum = udp_string.split(',')[1]
+            # checksum = udp_string.split(',')[1]
 
             # print("TEST connection established")
 
             # If the checksum is "1", process the received latitude and longitude values
-            if "1" in checksum:
-                latitude = float(udp_string.split(',')[2])
-                longitude = float(udp_string.split(',')[3])
-                # print(latitude, longitude)
+            # if "1" in checksum:
+            latitude = float(udp_string.split(',')[0])
+            longitude = float(udp_string.split(',')[1])
+            # print(latitude, longitude)
 
-                # If the altitude value is not empty, append the latitude, longitude, and altitude values to the cordinates and PrevCordinates lists
-                if altitude:
-                    cordinates.append(latitude)
-                    cordinates.append(longitude)
-                    cordinates.append(altitude)
+            # If the altitude value is not empty, append the latitude, longitude, and altitude values to the cordinates and PrevCordinates lists
+            if altitude:
+                cordinates.append(latitude)
+                cordinates.append(longitude)
+                cordinates.append(altitude)
 
-                    temp = []
-                    temp.append(latitude)
-                    temp.append(longitude)
-                    temp.append(altitude)
-                    # print(temp)
+                temp = []
+                temp.append(latitude)
+                temp.append(longitude)
+                temp.append(altitude)
+                # print(temp)
 
-                    PrevCordinates.append(temp)
-                    # print(PrevCordinates)
+                PrevCordinates.append(temp)
+                # print(PrevCordinates)
 
-                    # Uncomment this line to call the Track() function
-                    track()
+                # Uncomment this line to call the Track() function
+                track()
 
 
 async def esp8266_udp():
@@ -142,7 +143,7 @@ async def esp8266_udp():
     # Run this loop indefinitely
     while True:
         # Sleep for a small amount of time to avoid using too many resources
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.2)
 
         try:
             # Receive data from the client, with a buffer size of 1024 bytes
@@ -171,59 +172,57 @@ async def recapture():
             print("Recapture mode")
 
 
-async def serial_uno():
+def serial_uno():
     # Create an empty string to store the received data
     receive_string_new = ""
 
     # Run this loop indefinitely
-    while True:
-        global stepsH, stepsV
+    global stepsH, stepsV
 
-        # Sleep for a small amount of time to avoid using too many resources
-        await asyncio.sleep(0.5)
+    # Sleep for a small amount of time to avoid using too many resources
 
-        # If the directionqx list is not empty
-        if len(directionqx) != 0:
-            # Print the first element of the directionqx list (a tuple of two integers)
-            # print("Steps_Serial: ", directionqx[0])
+    # If the directionqx list is not empty
+    if len(directionqx) != 0:
+        # Print the first element of the directionqx list (a tuple of two integers)
+        # print("Steps_Serial: ", directionqx[0])
 
-            # Assign the first and second elements of the tuple to the stepsH and stepsV variables, respectively
-            stepsH = directionqx[0][0]
-            stepsV = directionqx[0][1]
+        # Assign the first and second elements of the tuple to the stepsH and stepsV variables, respectively
+        stepsH = directionqx[0][0]
+        stepsV = directionqx[0][1]
 
-            # Convert the stepsH and stepsV values to strings
-            angle_value_list = [str(stepsH), str(stepsV)]
+        # Convert the stepsH and stepsV values to strings
+        angle_value_list = [str(stepsH), str(stepsV)]
 
-            # Join the strings with a comma separator
-            send_string = ','.join(angle_value_list)
+        # Join the strings with a comma separator
+        send_string = ','.join(angle_value_list)
 
-            # Add a newline character to the end of the string
-            send_string += "\n"
+        # Add a newline character to the end of the string
+        send_string += "\n"
 
-            # Send the string to the Arduino. Make sure you encode it before sending.
-            ser.write(send_string.encode('utf-8'))
+        # Send the string to the Arduino. Make sure you encode it before sending.
+        ser.write(send_string.encode('utf-8'))
 
-            # Receive data from the Arduino and decode it from bytes to a string
-            receive_string = ser.readline().decode('utf-8', 'replace').rstrip()
+        # Receive data from the Arduino and decode it from bytes to a string
+        receive_string = ser.readline().decode('utf-8', 'replace').rstrip()
 
-            # Print the data received from Arduino to the terminal
-            print("------------------------------------------------")
-            print("PC H:  ", stepsH, " PC V:  ", stepsV)
-            print(receive_string)
-            print(send_string)
-            print("------------------------------------------------")
-            print(" ")
+        # Print the data received from Arduino to the terminal
+        # print("------------------------------------------------")
+        # print("PC H:  ", stepsH, " PC V:  ", stepsV)
+        print("Mega Steps: ", receive_string)
+        print("Pi Steps", send_string)
+        print("------------------------------------------------")
+        print(" ")
 
-            # If the received string is not empty and is different from the previous received string
-            if len(receive_string) != 0 and receive_string_new != receive_string:
-                # Print the directionqx list
-                print(directionqx)
-                # Remove the first element of the directionqx list
-                del directionqx[0]
-                # Update the receive_string_new variable with the received string
-                receive_string_new = receive_string
-                # Print the updated directionqx list
-                # print(directionqx)
+        # If the received string is not empty and is different from the previous received string
+        if len(receive_string) != 0 and receive_string_new != receive_string:
+            # Print the directionqx list
+            print(directionqx)
+            # Remove the first element of the directionqx list
+            del directionqx[0]
+            # Update the receive_string_new variable with the received string
+            receive_string_new = receive_string
+            # Print the updated directionqx list
+            # print(directionqx)
 
 
 def track():
@@ -261,25 +260,30 @@ def track():
         # If the direction is not (0, 0)
         if directionq[0] != 0 or directionq[1] != 0:
             # If the distance is greater than or equal to 2
-            if d >= 3:
+            if d >= 10:
                 # Append the direction to directionqx
                 directionqx.append(directionq)
+                serial_uno()
+                print("latitude: ", latitude)
+                print("longitude: ", longitude)
+                print("altitude: ", altitude)
+                print("The distance is", d)
                 print(directionqx)
+                print()
+            else:
+                print("close range mode: ",d)
 
                 # Print the horizontal and vertical angles and the number of steps in the direction
-                print("The horizontal angle is", horizantal_angle)
-                print("The vertical angle is", elevation_angle)
-                print("The number of steps is:", directionq)
+                # print("The horizontal angle is", horizantal_angle)
+                # print("The vertical angle is", elevation_angle)
+                # print("The number of steps is:", directionq)
 
-        # Print the distance
-        print("The distance is", d)
+                # Print the distance
+        # print("The distance is", d)
 
         # Update the previous horizontal and vertical angles
         OangleH = horizantal_angle
         OangleV = elevation_angle
-
-        # Print an empty line
-        print()
 
         # Remove the first three elements from cordinates
         del cordinates[:3]
@@ -332,7 +336,6 @@ try:
     # Start the Mobile_UDP task asynchronously
     asyncio.ensure_future(mobile_udp())
     asyncio.ensure_future(esp8266_udp())
-    asyncio.ensure_future(serial_uno())
     # asyncio.ensure_future(recapture())
 
     # Run the event loop indefinitely
